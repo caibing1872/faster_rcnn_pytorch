@@ -32,9 +32,9 @@ def log_print(text, color=None, on_color=None, attrs=None):
 # hyper-parameters
 # ------------
 imdb_name = 'voc_2007_trainval'
-cfg_file = 'experiments/cfgs/faster_rcnn_end2end.yml'
+cfg_file = 'experiments/cfgs/faster_rcnn_end2end_playground.yml'
 pretrained_model = 'data/pretrained_model/VGG_imagenet.npy'
-output_dir = 'models/saved_model3'
+output_dir = 'models/saved_model4'
 
 start_step = 0
 end_step = 100000
@@ -44,11 +44,10 @@ lr_decay = 1./10
 rand_seed = 1024
 _DEBUG = True
 use_tensorboard = True
-remove_all_log = False   # remove all historical experiments in TensorBoard
-exp_name = None     # the previous experiment name in TensorBoard
+remove_all_log = False      # remove all historical experiments in TensorBoard
+exp_name = None             # the previous experiment name in TensorBoard
 
 # ------------
-
 if rand_seed is not None:
     np.random.seed(rand_seed)
 
@@ -60,6 +59,9 @@ weight_decay = cfg.TRAIN.WEIGHT_DECAY
 disp_interval = cfg.TRAIN.DISPLAY
 log_interval = cfg.TRAIN.LOG_IMAGE_ITERS
 
+# indicate gpu_id
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'    # zero-index
+
 # load data
 imdb = get_imdb(imdb_name)
 rdl_roidb.prepare_roidb(imdb)
@@ -68,14 +70,15 @@ data_layer = RoIDataLayer(roidb, imdb.num_classes)
 
 # load net
 net = FasterRCNN(classes=imdb.classes, debug=_DEBUG)
-# network.weights_normal_init(net, dev=0.01)
-# network.load_pretrained_npy(net, pretrained_model)
+# train from scratch
+network.weights_normal_init(net, dev=0.01)
+network.load_pretrained_npy(net, pretrained_model)
 
-# model_file = '/media/longc/Data/models/VGGnet_fast_rcnn_iter_70000.h5'
-model_file = 'models/saved_model3/faster_rcnn_10000.h5'
-network.load_net(model_file, net)
-# exp_name = 'vgg16_02-19_13-24'
-start_step = 10001
+# resume
+# model_file = 'models/saved_model3/faster_rcnn_10000.h5'
+# network.load_net(model_file, net)
+# start_step = 10001
+# exp_name = 'vgg16_02-19_13-24'        # used for tensorboard only
 # lr /= 10.
 # network.weights_normal_init([net.bbox_fc, net.score_fc, net.fc6, net.fc7], dev=0.01)
 
@@ -89,7 +92,7 @@ optimizer = torch.optim.SGD(params[8:], lr=lr, momentum=momentum, weight_decay=w
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
-# tensorboard
+# tensorboard init
 use_tensorboard = use_tensorboard and CrayonClient is not None
 if use_tensorboard:
     # cc = CrayonClient(hostname='127.0.0.1')
@@ -170,6 +173,7 @@ for step in range(start_step, end_step+1):
         save_name = os.path.join(output_dir, 'faster_rcnn_{}.h5'.format(step))
         network.save_net(save_name, net)
         print('save model: {}'.format(save_name))
+
     if step in lr_decay_steps:
         lr *= lr_decay
         optimizer = torch.optim.SGD(params[8:], lr=lr, momentum=momentum, weight_decay=weight_decay)
@@ -180,4 +184,3 @@ for step in range(start_step, end_step+1):
         step_cnt = 0
         t.tic()
         re_cnt = False
-

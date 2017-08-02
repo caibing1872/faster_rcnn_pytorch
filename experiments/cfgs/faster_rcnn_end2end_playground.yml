@@ -1,11 +1,11 @@
 EXP_DIR: faster_rcnn_end2end
 LOG_DIR: faster_rcnn_voc
-IS_MULTISCALE: False
+IS_MULTISCALE: True
 NET_NAME: VGGnet
 ANCHOR_SCALES: [8, 16, 32]
 NCLASSES: 21
 TRAIN:
-  OHEM: False           # online mining
+  OHEM: True           # online mining
   RPN_BATCHSIZE: 300
   BATCH_SIZE: 300
   LOG_IMAGE_ITERS: 100
