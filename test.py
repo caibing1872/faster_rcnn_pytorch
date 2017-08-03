@@ -3,6 +3,7 @@ import torch
 import cv2
 import cPickle
 import numpy as np
+import matplotlib.pyplot as plt
 
 from faster_rcnn import network
 from faster_rcnn.faster_rcnn import FasterRCNN, RPN
@@ -14,19 +15,20 @@ from faster_rcnn.datasets.factory import get_imdb
 from faster_rcnn.fast_rcnn.config import cfg, cfg_from_file, get_output_dir
 
 
+# indicate gpu_id
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'    # zero-index
+
 # hyper-parameters
 # ------------
 imdb_name = 'voc_2007_test'
-cfg_file = 'experiments/cfgs/faster_rcnn_end2end.yml'
-# trained_model = '/media/longc/Data/models/VGGnet_fast_rcnn_iter_70000.h5'
-trained_model = 'models/saved_model3/faster_rcnn_90000.h5'
+cfg_file = 'experiments/cfgs/faster_rcnn_end2end_playground.yml'
+trained_model = 'models/saved_model4/faster_rcnn_100000.h5'
+save_name = 'faster_rcnn_10w_new'
 
-rand_seed = 1024
-
-save_name = 'faster_rcnn_100000'
 max_per_image = 300
 thresh = 0.05
-vis = False
+vis = False  # True
+rand_seed = 1024
 
 # ------------
 
@@ -136,8 +138,10 @@ def test_net(name, net, imdb, max_per_image=300, thresh=0.05, vis=False):
             .format(i + 1, num_images, detect_time, nms_time)
 
         if vis:
-            cv2.imshow('test', im2show)
-            cv2.waitKey(1)
+            plt.imshow(im2show)
+            plt.show()
+            # cv2.imshow('test', im2show)
+            # cv2.waitKey(1)
 
     with open(det_file, 'wb') as f:
         cPickle.dump(all_boxes, f, cPickle.HIGHEST_PROTOCOL)
